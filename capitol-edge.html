@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capitol Edge — AI-predicted congressional trades before they're disclosed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#070a09;
+    --ink-2:#0c110f;
+    --panel:#0f1613;
+    --panel-2:#131c18;
+    --line:#1d2a24;
+    --line-2:#28392f;
+    --text:#e8efe9;
+    --muted:#8ba093;
+    --muted-2:#5f7468;
+    --green:#3ff58a;
+    --green-dim:#1f9d59;
+    --green-deep:#0b3a23;
+    --amber:#ffb43d;
+    --amber-deep:#3a2a0b;
+    --red:#ff6b5e;
+    --serif:"Fraunces",Georgia,serif;
+    --sans:"Archivo",system-ui,sans-serif;
+    --mono:"JetBrains Mono",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--ink);
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(900px 500px at 78% -8%, rgba(63,245,138,.10), transparent 60%),
+      radial-gradient(700px 420px at 5% 12%, rgba(255,180,61,.05), transparent 55%);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+    background-image:linear-gradient(rgba(40,57,47,.10) 1px, transparent 1px),linear-gradient(90deg, rgba(40,57,47,.10) 1px, transparent 1px);
+    background-size:64px 64px;
+    mask-image:radial-gradient(ellipse 90% 70% at 50% 0%, #000 30%, transparent 80%);
+  }
+  .wrap{max-width:1200px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:var(--mono)}
+  .tag{
+    font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--green);
+  }
+
+  /* NAV */
+  nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(7,10,9,.82);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;height:68px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-weight:600;font-size:21px;letter-spacing:-.01em}
+  .logo .mark{
+    width:26px;height:26px;border:1.5px solid var(--green);border-radius:5px;
+    display:grid;place-items:center;color:var(--green);font-family:var(--mono);font-size:13px;font-weight:700;
+    box-shadow:0 0 18px rgba(63,245,138,.25);
+  }
+  .nav-links{display:flex;gap:34px;align-items:center}
+  .nav-links a{font-size:14px;color:var(--muted);transition:color .2s}
+  .nav-links a:hover{color:var(--text)}
+  .btn{
+    font-family:var(--sans);font-weight:600;font-size:14px;cursor:pointer;
+    border-radius:8px;padding:11px 18px;border:1px solid transparent;transition:.2s;display:inline-block;
+  }
+  .btn-primary{background:var(--green);color:#04140b;box-shadow:0 0 0 rgba(63,245,138,0)}
+  .btn-primary:hover{box-shadow:0 6px 28px rgba(63,245,138,.35);transform:translateY(-1px)}
+  .btn-ghost{background:transparent;color:var(--text);border-color:var(--line-2)}
+  .btn-ghost:hover{border-color:var(--green);color:var(--green)}
+  .nav-cta{padding:10px 16px}
+  .burger{display:none}
+
+  /* HERO */
+  .hero{padding:84px 0 56px;position:relative}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:54px;align-items:center}
+  .hero .eyebrow{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line-2);border-radius:100px;padding:6px 13px;margin-bottom:26px;background:var(--panel)}
+  .hero .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .hero .eyebrow span{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(40px,5.4vw,68px);line-height:1.02;letter-spacing:-.02em}
+  h1 .hl{color:var(--green);font-style:italic;font-weight:500}
+  .hero p.sub{color:var(--muted);font-size:18px;max-width:520px;margin:24px 0 34px}
+  .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .hero-ctas .btn{padding:14px 24px;font-size:15px}
+  .hero-note{font-family:var(--mono);font-size:12px;color:var(--muted-2);margin-top:22px;letter-spacing:.04em}
+
+  /* mockup card */
+  .mock{
+    background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line-2);border-radius:16px;padding:22px;
+    box-shadow:0 30px 80px -30px rgba(0,0,0,.8), 0 0 0 1px rgba(63,245,138,.04) inset;
+    position:relative;
+  }
+  .mock::before{content:"";position:absolute;inset:0;border-radius:16px;padding:1px;background:linear-gradient(140deg,rgba(63,245,138,.4),transparent 40%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+  .mock-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .mock-head .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .mock-head .live{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--green)}
+  .mock-head .live .d{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.6s infinite}
+  .mock-ticker{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
+  .mock-ticker .sym{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:.02em}
+  .mock-ticker .act{font-family:var(--mono);font-size:13px;font-weight:700;padding:4px 10px;border-radius:6px;background:var(--green-deep);color:var(--green);border:1px solid rgba(63,245,138,.3)}
+  .mock-member{color:var(--muted);font-size:14px;margin-bottom:20px}
+  .mock-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+  .mock-stat .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-2);margin-bottom:6px}
+  .mock-stat .v{font-family:var(--serif);font-size:26px;font-weight:600}
+  .mock-stat .v.green{color:var(--green)}
+  .conf-bar{height:8px;border-radius:5px;background:var(--line);overflow:hidden;margin-top:9px}
+  .conf-bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green-dim),var(--green));box-shadow:0 0 12px rgba(63,245,138,.5);width:0;transition:width 1.6s cubic-bezier(.2,.8,.2,1)}
+  .mock-foot{border-top:1px dashed var(--line-2);padding-top:14px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted-2)}
+
+  /* TICKER BAR */
+  .tickerbar{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--ink-2);overflow:hidden;position:relative;z-index:1}
+  .tickerbar .lead{position:absolute;left:0;top:0;bottom:0;z-index:2;display:flex;align-items:center;gap:8px;padding:0 18px;background:var(--green);color:#04140b;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em}
+  .ticker-track{display:flex;gap:38px;padding:13px 0;white-space:nowrap;width:max-content;animation:scroll 42s linear infinite}
+  .tickerbar:hover .ticker-track{animation-play-state:paused}
+  @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .tk{display:inline-flex;align-items:center;gap:11px;font-family:var(--mono);font-size:13px}
+  .tk .mem{color:var(--muted)}
+  .tk .sym{color:var(--text);font-weight:700}
+  .tk .buy{color:var(--green)}
+  .tk .sell{color:var(--amber)}
+  .tk .cf{color:var(--muted-2)}
+  .tk .sep{color:var(--line-2)}
+
+  /* SECTION SCAFFOLD */
+  section{position:relative;z-index:1}
+  .sec{padding:96px 0}
+  .sec-head{max-width:640px;margin-bottom:54px}
+  .sec-head h2{font-family:var(--serif);font-weight:600;font-size:clamp(30px,3.6vw,44px);line-height:1.08;letter-spacing:-.015em;margin:14px 0 0}
+  .sec-head p{color:var(--muted);font-size:17px;margin-top:16px}
+
+  /* HOW IT WORKS */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:30px 26px;position:relative;transition:.25s}
+  .step:hover{border-color:var(--line-2);transform:translateY(-4px);background:var(--panel-2)}
+  .step .num{font-family:var(--mono);font-size:13px;color:var(--green);border:1px solid rgba(63,245,138,.3);width:42px;height:42px;border-radius:10px;display:grid;place-items:center;margin-bottom:22px;background:var(--green-deep)}
+  .step h3{font-family:var(--serif);font-size:21px;font-weight:600;margin-bottom:10px}
+  .step p{color:var(--muted);font-size:15px}
+  .step .arrow{position:absolute;right:-22px;top:54px;color:var(--line-2);font-size:20px;z-index:3}
+  .step:last-child .arrow{display:none}
+
+  /* LIVE FEED */
+  .feed{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+  .feed-head,.feed-row{display:grid;grid-template-columns:1.5fr .7fr .7fr .8fr 1.4fr 1.1fr .9fr;gap:14px;align-items:center;padding:16px 22px}
+  .feed-head{background:var(--ink-2);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
+  .feed-row{border-bottom:1px solid var(--line);font-size:14px;transition:.15s}
+  .feed-row:last-child{border-bottom:none}
+  .feed-row:hover{background:var(--panel-2)}
+  .feed-row .name{font-weight:600}
+  .feed-row .name small{display:block;font-family:var(--mono);font-size:11px;color:var(--muted-2);font-weight:400}
+  .chamber{font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--line-2);color:var(--muted);display:inline-block}
+  .sym{font-family:var(--mono);font-weight:700}
+  .pill{font-family:var(--mono);font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px;display:inline-block}
+  .pill.buy{background:var(--green-deep);color:var(--green);border:1px solid rgba(63,245,138,.25)}
+  .pill.sell{background:var(--amber-deep);color:var(--amber);border:1px solid rgba(255,180,61,.25)}
+  .cbar{height:7px;border-radius:5px;background:var(--line);overflow:hidden;position:relative}
+  .cbar i{display:block;height:100%;border-radius:5px}
+  .cbar.hi i{background:linear-gradient(90deg,var(--green-dim),var(--green))}
+  .cbar.md i{background:linear-gradient(90deg,#9c7a16,var(--amber))}
+  .cbar-wrap{display:flex;align-items:center;gap:9px}
+  .cbar-wrap .pct{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:34px}
+  .tf{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .status{font-family:var(--mono);font-size:12px}
+  .status.pred{color:var(--muted)}
+  .status.conf{color:var(--green)}
+
+  /* STATS */
+  .stats-sec{background:linear-gradient(180deg,transparent,rgba(15,22,19,.6),transparent);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:30px;text-align:left}
+  .stat .v{font-family:var(--serif);font-size:clamp(40px,5vw,62px);font-weight:600;line-height:1;color:var(--green);letter-spacing:-.02em}
+  .stat .v .u{font-size:.5em;color:var(--muted)}
+  .stat .k{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--muted);margin-top:12px;text-transform:uppercase}
+  .stat{border-left:1px solid var(--line-2);padding-left:22px}
+
+  /* FEATURES */
+  .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .fcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px;transition:.25s}
+  .fcard:hover{border-color:rgba(63,245,138,.3);transform:translateY(-4px);box-shadow:0 20px 50px -30px rgba(63,245,138,.3)}
+  .fcard .ico{width:44px;height:44px;border-radius:10px;background:var(--green-deep);border:1px solid rgba(63,245,138,.2);display:grid;place-items:center;margin-bottom:18px;color:var(--green)}
+  .fcard h3{font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:9px}
+  .fcard p{color:var(--muted);font-size:14.5px}
+
+  /* PRICING */
+  .ptiers{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;align-items:start}
+  .ptier{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:32px 28px;transition:.25s;position:relative}
+  .ptier:hover{border-color:var(--line-2)}
+  .ptier.pop{border-color:var(--green);background:var(--panel-2);box-shadow:0 30px 80px -40px rgba(63,245,138,.4)}
+  .ptier .badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--green);color:#04140b;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.14em;padding:5px 13px;border-radius:100px;text-transform:uppercase}
+  .ptier .pname{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .ptier .price{font-family:var(--serif);font-size:48px;font-weight:600;margin:14px 0 2px;letter-spacing:-.02em}
+  .ptier .price .per{font-family:var(--mono);font-size:14px;color:var(--muted);font-weight:400}
+  .ptier .price.free{color:var(--green)}
+  .ptier ul{list-style:none;margin:24px 0 28px;display:flex;flex-direction:column;gap:13px}
+  .ptier li{font-size:14.5px;color:var(--text);display:flex;gap:11px;align-items:flex-start}
+  .ptier li .ck{color:var(--green);font-family:var(--mono);flex-shrink:0}
+  .ptier .btn{width:100%;text-align:center;padding:13px}
+
+  /* ABOUT */
+  .about-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:54px;align-items:start}
+  .mission{font-family:var(--serif);font-size:clamp(22px,2.6vw,30px);font-weight:500;line-height:1.35;letter-spacing:-.01em}
+  .mission .hl{color:var(--green)}
+  .team{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .tmember{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:22px;transition:.25s}
+  .tmember:hover{border-color:var(--line-2);transform:translateY(-3px)}
+  .tmember .av{width:46px;height:46px;border-radius:50%;background:linear-gradient(140deg,var(--green-dim),var(--green-deep));display:grid;place-items:center;font-family:var(--serif);font-weight:600;color:#04140b;font-size:18px;margin-bottom:16px}
+  .tmember .tn{font-weight:600;font-size:16px}
+  .tmember .tr{font-family:var(--mono);font-size:11.5px;color:var(--green);letter-spacing:.04em;margin:3px 0 10px}
+  .tmember .tb{color:var(--muted);font-size:13.5px}
+
+  /* FAQ */
+  .faq{max-width:840px;margin:0 auto}
+  .qa{border-bottom:1px solid var(--line)}
+  .qa button{width:100%;background:none;border:none;color:var(--text);font-family:var(--serif);font-size:20px;font-weight:500;text-align:left;padding:24px 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px}
+  .qa .sign{font-family:var(--mono);color:var(--green);font-size:22px;transition:transform .3s;flex-shrink:0}
+  .qa.open .sign{transform:rotate(45deg)}
+  .qa .ans{max-height:0;overflow:hidden;transition:max-height .35s ease}
+  .qa .ans p{color:var(--muted);font-size:15.5px;padding-bottom:24px;max-width:680px}
+
+  /* FOOTER */
+  footer{border-top:1px solid var(--line);background:var(--ink-2);padding:64px 0 40px;position:relative;z-index:1}
+  .foot-top{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap;margin-bottom:44px}
+  .foot-links{display:flex;gap:30px;flex-wrap:wrap}
+  .foot-links a{color:var(--muted);font-size:14px;transition:.2s}
+  .foot-links a:hover{color:var(--green)}
+  .disclaimer{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px 24px;font-size:12.5px;color:var(--muted-2);line-height:1.7;font-family:var(--mono)}
+  .disclaimer strong{color:var(--amber);font-weight:700}
+  .foot-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:30px;color:var(--muted-2);font-size:13px;flex-wrap:wrap;gap:14px}
+
+  /* reveal */
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+  .fade-load{opacity:0;animation:fadeUp .8s ease forwards}
+  @keyframes fadeUp{to{opacity:1;transform:none}}
+  .d1{animation-delay:.05s}.d2{animation-delay:.15s}.d3{animation-delay:.25s}.d4{animation-delay:.35s}.d5{animation-delay:.5s}
+  .fade-load{transform:translateY(18px)}
+
+  @media(max-width:900px){
+    .hero-grid,.about-grid{grid-template-columns:1fr;gap:38px}
+    .steps,.fgrid,.ptiers,.team{grid-template-columns:1fr}
+    .stats{grid-template-columns:repeat(2,1fr);gap:30px 20px}
+    .nav-links{display:none}
+    .feed-head{display:none}
+    .feed-row{grid-template-columns:1fr 1fr;gap:8px 14px;padding:18px}
+    .step .arrow{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="wrap nav-inner">
+    <a href="#" class="logo"><span class="mark">CE</span>Capitol Edge</a>
+    <div class="nav-links">
+      <a href="#how">Product</a>
+      <a href="#accuracy">Accuracy</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#about">About</a>
+      <a href="#pricing" class="btn btn-primary nav-cta">Start Free Trial</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow fade-load d1"><span class="dot"></span><span>Public-data intelligence · No insider access</span></div>
+      <h1 class="fade-load d2">See the trade <span class="hl">before</span> the disclosure does.</h1>
+      <p class="sub fade-load d3">Capitol Edge models public signals — committee assignments, lobbying flows, and bill sponsorships — into probabilistic predictions of congressional stock activity, delivered before the STOCK Act disclosure window closes.</p>
+      <div class="hero-ctas fade-load d4">
+        <a href="#pricing" class="btn btn-primary">Start Free</a>
+        <a href="#feed" class="btn btn-ghost">See Live Demo →</a>
+      </div>
+      <div class="hero-note fade-load d5">// 94 members tracked · 1,287 predictions issued · avg. 19-day lead time</div>
+    </div>
+
+    <div class="mock fade-load d4">
+      <div class="mock-head">
+        <span class="lbl">Sample Prediction</span>
+        <span class="live"><span class="d"></span>MODEL v4.2</span>
+      </div>
+      <div class="mock-ticker">
+        <span class="sym">NVDA</span>
+        <span class="act">▲ PREDICTED BUY</span>
+      </div>
+      <div class="mock-member">Rep. D. Harwell · House · Science &amp; Technology Cmte.</div>
+      <div class="mock-row">
+        <div class="mock-stat">
+          <div class="k">Confidence Score</div>
+          <div class="v green" id="mockConf">87%</div>
+          <div class="conf-bar"><i id="mockBar"></i></div>
+        </div>
+        <div class="mock-stat">
+          <div class="k">Predicted Window</div>
+          <div class="v">11–16 days</div>
+        </div>
+      </div>
+      <div class="mock-foot">
+        <span>SIGNAL: semiconductor procurement markup</span>
+        <span>ID #CE-44192</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- TICKER BAR -->
+<div class="tickerbar">
+  <div class="lead">● LIVE</div>
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="sec" id="how">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="tag">How it works</span>
+      <h2>From public signal to early warning, in three steps.</h2>
+      <p>We never touch non-public information. Everything begins with data Congress is already required to publish.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="num">01</div>
+        <div class="arrow">→</div>
+        <h3>Monitor public signals</h3>
+        <p>We continuously ingest committee assignments, lobbying disclosure flows, hearing schedules, and bill sponsorships to map which members are positioned near which sectors.</p>
+      </div>
+      <div class="step reveal">
+        <div class="num">02</div>
+        <div class="arrow">→</div>
+        <h3>Generate predictions</h3>
+        <p>Our model weighs historical disclosure patterns against live signals to produce a probabilistic forecast — ticker, direction, confidence, and the likely trade window.</p>
+      </div>
+      <div class="step reveal">
+        <div class="num">03</div>
+        <h3>Alert before disclosure</h3>
+        <p>Predictions land in your feed ahead of the 45-day STOCK Act disclosure deadline, giving you context while it still has signal value.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE FEED -->
+<section class="sec" id="feed" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="tag">Live predictions feed</span>
+      <h2>What the model sees right now.</h2>
+      <p>A sample of active forecasts. Confirmed rows have since matched a filed disclosure.</p>
+    </div>
+    <div class="feed reveal">
+      <div class="feed-head">
+        <div>Member</div><div>Chamber</div><div>Ticker</div><div>Action</div><div>Confidence</div><div>Window</div><div>Status</div>
+      </div>
+      <!-- rows injected -->
+      <div id="feedRows"></div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="sec stats-sec" id="accuracy">
+  <div class="wrap">
+    <div class="sec-head reveal" style="margin-bottom:46px">
+      <span class="tag">Track record</span>
+      <h2>Measured against filed disclosures.</h2>
+    </div>
+    <div class="stats" id="statsBlock">
+      <div class="stat reveal"><div class="v" data-count="83" data-suffix="%">0</div><div class="k">Directional accuracy</div></div>
+      <div class="stat reveal"><div class="v" data-count="94">0</div><div class="k">Members tracked</div></div>
+      <div class="stat reveal"><div class="v" data-count="1287">0</div><div class="k">Predictions issued</div></div>
+      <div class="stat reveal"><div class="v" data-count="19" data-suffix="d">0</div><div class="k">Avg. lead time</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="tag">Features</span>
+      <h2>Built for people who read the footnotes.</h2>
+    </div>
+    <div class="fgrid">
+      <div class="fcard reveal"><div class="ico">◎</div><h3>Real-time Alerts</h3><p>Push, Slack, and email notifications the moment a high-confidence prediction crosses your threshold.</p></div>
+      <div class="fcard reveal"><div class="ico">▥</div><h3>Committee Signal Analysis</h3><p>See exactly which assignments, markups, and hearings are driving a member's predicted exposure.</p></div>
+      <div class="fcard reveal"><div class="ico">▦</div><h3>Sector Heat Maps</h3><p>Visualize predicted accumulation and rotation across sectors, broken out by chamber and party.</p></div>
+      <div class="fcard reveal"><div class="ico">↺</div><h3>Historical Backtesting</h3><p>Replay the model against years of filed disclosures to stress-test any strategy before you trust it.</p></div>
+      <div class="fcard reveal"><div class="ico">⌗</div><h3>API Access</h3><p>Stream predictions and confidence scores into your own dashboards, models, or research stack.</p></div>
+      <div class="fcard reveal"><div class="ico">★</div><h3>Custom Watchlists</h3><p>Track the members, sectors, and tickers you care about — and mute everything else.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="sec" id="pricing">
+  <div class="wrap">
+    <div class="sec-head reveal" style="margin:0 auto 54px;text-align:center">
+      <span class="tag">Pricing</span>
+      <h2>Start free. Upgrade when the signal pays for itself.</h2>
+    </div>
+    <div class="ptiers">
+      <div class="ptier reveal">
+        <div class="pname">Observer</div>
+        <div class="price free">Free</div>
+        <ul>
+          <li><span class="ck">✓</span>7-day delayed predictions</li>
+          <li><span class="ck">✓</span>5-member watchlist</li>
+          <li><span class="ck">✓</span>Weekly email digest</li>
+          <li><span class="ck">✓</span>Community access</li>
+        </ul>
+        <a href="#" class="btn btn-ghost">Get started</a>
+      </div>
+      <div class="ptier pop reveal">
+        <div class="badge">Most Popular</div>
+        <div class="pname">Edge</div>
+        <div class="price">$49<span class="per">/mo</span></div>
+        <ul>
+          <li><span class="ck">✓</span>Real-time predictions</li>
+          <li><span class="ck">✓</span>50-member watchlist</li>
+          <li><span class="ck">✓</span>Slack + email alerts</li>
+          <li><span class="ck">✓</span>Sector heat maps</li>
+          <li><span class="ck">✓</span>Confidence thresholds</li>
+        </ul>
+        <a href="#" class="btn btn-primary">Start free trial</a>
+      </div>
+      <div class="ptier reveal">
+        <div class="pname">Institutional</div>
+        <div class="price">$299<span class="per">/mo</span></div>
+        <ul>
+          <li><span class="ck">✓</span>Full member coverage</li>
+          <li><span class="ck">✓</span>API access</li>
+          <li><span class="ck">✓</span>Custom models</li>
+          <li><span class="ck">✓</span>Backtesting suite</li>
+          <li><span class="ck">✓</span>Dedicated support</li>
+        </ul>
+        <a href="#" class="btn btn-ghost">Contact sales</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="sec" id="about">
+  <div class="wrap about-grid">
+    <div class="reveal">
+      <span class="tag">About us</span>
+      <p class="mission" style="margin-top:18px">We believe public markets work best when public officials are <span class="hl">accountable in real time</span> — not 45 days later. Capitol Edge turns mandatory disclosures and open signals into transparency that arrives while it still matters.</p>
+    </div>
+    <div class="team reveal">
+      <div class="tmember">
+        <div class="av">MR</div>
+        <div class="tn">Marcus Reyland</div>
+        <div class="tr">Co-founder · Modeling</div>
+        <div class="tb">Former quant researcher at Two Sigma; built the first version of the prediction engine.</div>
+      </div>
+      <div class="tmember">
+        <div class="av">PV</div>
+        <div class="tn">Priya Vance</div>
+        <div class="tr">Co-founder · Data</div>
+        <div class="tb">Ex-FEC data analyst who spent six years untangling federal disclosure filings.</div>
+      </div>
+      <div class="tmember">
+        <div class="av">JO</div>
+        <div class="tn">Dr. Jonah Okafor</div>
+        <div class="tr">Head of Research</div>
+        <div class="tb">PhD in political econometrics; designs the signal-weighting and backtesting framework.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head reveal" style="margin:0 auto 44px;text-align:center">
+      <span class="tag">FAQ</span>
+      <h2>Questions worth asking.</h2>
+    </div>
+    <div class="faq">
+      <div class="qa reveal"><button>Is this legal?<span class="sign">+</span></button><div class="ans"><p>Yes. Capitol Edge analyzes only information that is already public and legally required to be disclosed — committee assignments, lobbying records, bill sponsorships, and filed STOCK Act disclosures. We do not use, seek, or claim access to any non-public or material insider information.</p></div></div>
+      <div class="qa reveal"><button>How accurate is the model?<span class="sign">+</span></button><div class="ans"><p>Across filed disclosures we currently track, the model achieves roughly 83% directional accuracy on high-confidence predictions. Accuracy varies by member, sector, and confidence band — every prediction ships with its own score, and our backtesting suite lets you verify performance yourself.</p></div></div>
+      <div class="qa reveal"><button>What data sources do you use?<span class="sign">+</span></button><div class="ans"><p>Public, structured sources only: congressional committee rosters, the Lobbying Disclosure Act database, bill sponsorship and cosponsorship records, hearing calendars, and historical periodic transaction reports filed under the STOCK Act.</p></div></div>
+      <div class="qa reveal"><button>How fast are alerts delivered?<span class="sign">+</span></button><div class="ans"><p>Predictions are generated continuously and pushed within minutes of a qualifying signal change. On the Edge and Institutional plans, alerts arrive in real time via Slack, email, or the API; Observer users receive a weekly digest.</p></div></div>
+      <div class="qa reveal"><button>Do you offer a free trial?<span class="sign">+</span></button><div class="ans"><p>Yes. The Observer plan is free forever, and the Edge plan includes a 14-day free trial with full real-time access — no card required to start.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <a href="#" class="logo"><span class="mark">CE</span>Capitol Edge</a>
+      <div class="foot-links">
+        <a href="#how">Product</a>
+        <a href="#accuracy">Accuracy</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#about">About</a>
+        <a href="#">Terms</a>
+        <a href="#">Privacy</a>
+      </div>
+    </div>
+    <div class="disclaimer">
+      <strong>Legal disclaimer.</strong> All predictions shown are probabilistic forecasts generated from publicly available data only. Capitol Edge does not use, possess, or claim access to any material non-public or insider information. Forecasts may be inaccurate and are provided for informational purposes only. Nothing on this site constitutes investment advice, a recommendation, or an offer to buy or sell any security. Past model performance does not guarantee future results. You are solely responsible for your own investment decisions.
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Capitol Edge Intelligence, Inc. All rights reserved.</span>
+      <span class="mono">Built on public data.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ---- Ticker bar data ----
+  const ticks = [
+    {m:"Rep. D. Harwell", s:"NVDA", a:"BUY", c:87},
+    {m:"Sen. R. Castellano", s:"LMT", a:"BUY", c:79},
+    {m:"Rep. T. Okonkwo", s:"PFE", a:"SELL", c:72},
+    {m:"Sen. M. Delgado", s:"XOM", a:"BUY", c:91},
+    {m:"Rep. K. Sundqvist", s:"AAPL", a:"SELL", c:68},
+    {m:"Sen. B. Whitfield", s:"GE", a:"BUY", c:83},
+    {m:"Rep. A. Marchetti", s:"JPM", a:"BUY", c:76},
+    {m:"Sen. L. Abernathy", s:"TSLA", a:"SELL", c:64},
+  ];
+  function tickHTML(t){
+    const cls = t.a==="BUY"?"buy":"sell";
+    const arr = t.a==="BUY"?"▲":"▼";
+    return `<span class="tk"><span class="mem">${t.m}</span><span class="sym">${t.s}</span><span class="${cls}">${arr} ${t.a}</span><span class="cf">${t.c}%</span><span class="sep">|</span></span>`;
+  }
+  const track = document.getElementById('tickerTrack');
+  const seq = ticks.map(tickHTML).join('');
+  track.innerHTML = seq + seq; // duplicate for seamless loop
+
+  // ---- Live feed data ----
+  const feed = [
+    {n:"Rep. D. Harwell", st:"IL-09", ch:"House", s:"NVDA", a:"Buy", c:87, tf:"11–16 days", conf:false},
+    {n:"Sen. R. Castellano", st:"NV", ch:"Senate", s:"LMT", a:"Buy", c:79, tf:"7–12 days", conf:true},
+    {n:"Rep. T. Okonkwo", st:"TX-22", ch:"House", s:"PFE", a:"Sell", c:72, tf:"14–21 days", conf:false},
+    {n:"Sen. M. Delgado", st:"AZ", ch:"Senate", s:"XOM", a:"Buy", c:91, tf:"4–9 days", conf:true},
+    {n:"Rep. K. Sundqvist", st:"MN-03", ch:"House", s:"AAPL", a:"Sell", c:68, tf:"18–25 days", conf:false},
+    {n:"Sen. B. Whitfield", st:"OH", ch:"Senate", s:"GE", a:"Buy", c:83, tf:"9–15 days", conf:false},
+  ];
+  document.getElementById('feedRows').innerHTML = feed.map(r=>{
+    const band = r.c>=78 ? 'hi':'md';
+    const act = r.a==="Buy"?"buy":"sell";
+    const status = r.conf
+      ? `<span class="status conf">✅ Confirmed</span>`
+      : `<span class="status pred">● Predicted</span>`;
+    return `<div class="feed-row">
+      <div class="name">${r.n}<small>${r.st}</small></div>
+      <div><span class="chamber">${r.ch}</span></div>
+      <div class="sym">${r.s}</div>
+      <div><span class="pill ${act}">${r.a.toUpperCase()}</span></div>
+      <div class="cbar-wrap"><div class="cbar ${band}" style="flex:1"><i data-w="${r.c}"></i></div><span class="pct">${r.c}%</span></div>
+      <div class="tf">${r.tf}</div>
+      ${status}
+    </div>`;
+  }).join('');
+
+  // ---- Reveal on scroll ----
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('in');
+        // fill confidence bars inside feed
+        e.target.querySelectorAll && e.target.querySelectorAll('.cbar i').forEach(b=>{b.style.width=b.dataset.w+'%';});
+        io.unobserve(e.target);
+      }
+    });
+  },{threshold:.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // fill feed bars once feed reveals (feed is a single .reveal wrapper)
+  const feedEl = document.querySelector('#feed .feed');
+  new IntersectionObserver((ent,obs)=>{
+    ent.forEach(e=>{ if(e.isIntersecting){
+      e.target.querySelectorAll('.cbar i').forEach(b=>{ setTimeout(()=>b.style.width=b.dataset.w+'%',120); });
+      obs.unobserve(e.target);
+    }});
+  },{threshold:.2}).observe(feedEl);
+
+  // ---- Mock card confidence bar ----
+  setTimeout(()=>{ document.getElementById('mockBar').style.width='87%'; }, 600);
+
+  // ---- Count-up stats ----
+  function countUp(el){
+    const target = +el.dataset.count;
+    const suffix = el.dataset.suffix || '';
+    const dur = 1500, start = performance.now();
+    function tick(now){
+      const p = Math.min((now-start)/dur,1);
+      const eased = 1-Math.pow(1-p,3);
+      let val = Math.floor(eased*target);
+      el.innerHTML = val.toLocaleString() + (suffix?`<span class="u">${suffix}</span>`:'');
+      if(p<1) requestAnimationFrame(tick);
+      else el.innerHTML = target.toLocaleString() + (suffix?`<span class="u">${suffix}</span>`:'');
+    }
+    requestAnimationFrame(tick);
+  }
+  const statsIO = new IntersectionObserver((ent,obs)=>{
+    ent.forEach(e=>{ if(e.isIntersecting){
+      e.target.querySelectorAll('.v[data-count]').forEach(countUp);
+      obs.unobserve(e.target);
+    }});
+  },{threshold:.4});
+  statsIO.observe(document.getElementById('statsBlock'));
+
+  // ---- FAQ accordion ----
+  document.querySelectorAll('.qa button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const qa = btn.parentElement;
+      const ans = qa.querySelector('.ans');
+      const open = qa.classList.contains('open');
+      document.querySelectorAll('.qa').forEach(o=>{o.classList.remove('open');o.querySelector('.ans').style.maxHeight=null;});
+      if(!open){ qa.classList.add('open'); ans.style.maxHeight = ans.scrollHeight+'px'; }
+    });
+  });
+</script>
+</body>
+</html>
